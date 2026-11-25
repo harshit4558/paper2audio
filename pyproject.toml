@@ -1,0 +1,33 @@
+[project]
+name = "paper2audio"
+version = "0.1.0"
+description = "Turns research papers into listenable audiobooks"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "kokoro>=0.9.4",
+    "soundfile>=0.12.0",
+    "numpy>=1.26.0",
+    "ffmpeg-python>=0.2.0",
+    "pylatexenc>=2.10",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",
+    "aiofiles>=24.0.0",
+]
+
+[project.scripts]
+paper2audio = "paper2audio.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["paper2audio"]

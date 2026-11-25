@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>paper2audio</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; background: #fff; }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .sub { color: #666; margin-bottom: 36px; }
+  label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; }
+  input[type=text], select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; outline: none; }
+  input[type=text]:focus, select:focus { border-color: #333; }
+  .row { margin-bottom: 20px; }
+  .options { display: flex; gap: 16px; }
+  .options .row { flex: 1; }
+  button { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  #status { margin-top: 28px; display: none; }
+  .stage { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.9rem; color: #555; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; flex-shrink: 0; }
+  .dot.active { background: #f0c040; }
+  .dot.done { background: #3cb371; }
+  .dot.failed { background: #e55; }
+  #msg { font-size: 0.85rem; color: #888; margin-top: 8px; }
+  #download { display: none; margin-top: 24px; }
+  #download a { display: block; text-align: center; padding: 12px; background: #3cb371; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 500; }
+  #error { display: none; margin-top: 16px; padding: 12px; background: #fff0f0; border-radius: 6px; color: #c00; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<h1>paper2audio</h1>
+<p class="sub">Turns research papers into audiobooks</p>
+
+<form id="form">
+  <div class="row">
+    <label for="arxiv">arXiv ID or URL</label>
+    <input type="text" id="arxiv" placeholder="1706.03762 or https://arxiv.org/abs/1706.03762" required>
+  </div>
+  <div class="options">
+    <div class="row">
+      <label for="level">Explanation level</label>
+      <select id="level">
+        <option value="light">Light</option>
+        <option value="normal" selected>Normal</option>
+        <option value="heavy">Heavy</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="appendix">Include appendix</label>
+      <select id="appendix">
+        <option value="false" selected>No</option>
+        <option value="true">Yes</option>
+      </select>
+    </div>
+  </div>
+  <button type="submit" id="btn">Generate audiobook</button>
+</form>
+
+<div id="status">
+  <div class="stage" id="s-ingesting"><div class="dot" id="d-ingesting"></div> Downloading paper</div>
+  <div class="stage" id="s-parsing"><div class="dot" id="d-parsing"></div> Parsing</div>
+  <div class="stage" id="s-cleaning"><div class="dot" id="d-cleaning"></div> Cleaning text</div>
+  <div class="stage" id="s-context"><div class="dot" id="d-context"></div> Context pass</div>
+  <div class="stage" id="s-scripting"><div class="dot" id="d-scripting"></div> Generating script</div>
+  <div class="stage" id="s-tts"><div class="dot" id="d-tts"></div> TTS synthesis</div>
+  <div class="stage" id="s-assembling"><div class="dot" id="d-assembling"></div> Assembling audio</div>
+  <p id="msg"></p>
+</div>
+
+<div id="download"><a href="#" id="dl-link">Download audiobook (.zip)</a></div>
+<div id="error" id="err-box"></div>
+
+<script>
+const STAGES = ["ingesting","parsing","cleaning","context","scripting","tts","assembling"];
+
+document.getElementById("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const arxiv_id = document.getElementById("arxiv").value.trim();
+  const level = document.getElementById("level").value;
+  const include_appendix = document.getElementById("appendix").value === "true";
+
+  document.getElementById("btn").disabled = true;
+  document.getElementById("status").style.display = "block";
+  document.getElementById("download").style.display = "none";
+  document.getElementById("error").style.display = "none";
+  STAGES.forEach(s => document.getElementById("d-"+s).className = "dot");
+
+  const res = await fetch("/jobs", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({arxiv_id, level, include_appendix})
+  });
+  const job = await res.json();
+
+  const es = new EventSource(`/jobs/${job.id}/events`);
+  es.onmessage = ev => {
+    const data = JSON.parse(ev.data);
+    const status = data.status;
+    document.getElementById("msg").textContent = data.message || "";
+
+    STAGES.forEach(s => {
+      const dot = document.getElementById("d-"+s);
+      const idx = STAGES.indexOf(s);
+      const cur = STAGES.indexOf(status);
+      if (s === status) dot.className = "dot active";
+      else if (idx < cur) dot.className = "dot done";
+    });
+
+    if (status === "done") {
+      STAGES.forEach(s => document.getElementById("d-"+s).className = "dot done");
+      document.getElementById("download").style.display = "block";
+      document.getElementById("dl-link").href = data.download_url;
+      document.getElementById("btn").disabled = false;
+      es.close();
+    }
+    if (status === "failed") {
+      const box = document.getElementById("error");
+      box.style.display = "block";
+      box.textContent = "Error: " + (data.error || "unknown");
+      document.getElementById("btn").disabled = false;
+      es.close();
+    }
+  };
+});
+</script>
+</body>
+</html>

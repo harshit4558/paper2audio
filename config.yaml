@@ -1,0 +1,36 @@
+llm:
+  model: claude-opus-4-5
+  context_model: claude-opus-4-5
+  max_retries: 3
+
+tts:
+  provider: kokoro
+  kokoro:
+    voice_read: am_michael
+    voice_explain: af_heart
+    speed: 1.0
+    sample_rate: 24000
+
+defaults:
+  level: normal
+  include_appendix: false
+
+audio:
+  pause_between_chunks_ms: 300
+  pause_around_explain_ms: 600
+  pause_before_figure_ms: 800
+  pause_between_sections_ms: 1500
+  output_format: both
+  loudness_target_lufs: -23
+
+cache:
+  dir: ./cache
+  outputs_dir: ./outputs
+
+rss:
+  title: "paper2audio"
+  description: "Research papers as audiobooks"
+  author: "paper2audio"
+
+ffmpeg:
+  path: ffmpeg
