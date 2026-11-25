@@ -1,6 +1,6 @@
 llm:
-  model: claude-opus-4-5
-  context_model: claude-opus-4-5
+  model: claude-sonnet-4-6
+  context_model: claude-haiku-4-5-20251001
   max_retries: 3
 
 tts:
