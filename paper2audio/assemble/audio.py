@@ -124,12 +124,14 @@ def stitch_audio(
         check=True, capture_output=True,
     )
 
-    # encode m4b with chapters
+    # encode m4b with chapters (transcode mp3 → aac; mp3 stream can't be copied into m4b)
     subprocess.run(
-        [ffmpeg_path, "-y", "-i", str(mp3_path),
+        [ffmpeg_path, "-y",
+         "-i", str(mp3_path),
          "-i", str(chapters_path),
          "-map_metadata", "1",
-         "-codec:a", "copy", str(m4b_path)],
+         "-c:a", "aac", "-b:a", "64k",
+         str(m4b_path)],
         check=True, capture_output=True,
     )
 
@@ -155,11 +157,17 @@ def _write_chapters(section_starts: dict[str, float], doc: DocumentModel, output
     lines = [";FFMETADATA1\n"]
     section_map = {s.id: s for s in doc.sections}
 
-    for sec_id, start_time in section_starts.items():
+    sorted_sections = sorted(section_starts.items(), key=lambda x: x[1])
+
+    for i, (sec_id, start_time) in enumerate(sorted_sections):
         section = section_map.get(sec_id)
         title = section.title if section else sec_id
         start_ms = int(start_time * 1000)
-        lines.append(f"[CHAPTER]\nTIMEBASE=1/1000\nSTART={start_ms}\nEND={start_ms + 1}\ntitle={title}\n\n")
+        if i + 1 < len(sorted_sections):
+            end_ms = int(sorted_sections[i + 1][1] * 1000)
+        else:
+            end_ms = start_ms + 600000  # 10 min fallback for last chapter
+        lines.append(f"[CHAPTER]\nTIMEBASE=1/1000\nSTART={start_ms}\nEND={end_ms}\ntitle={title}\n\n")
 
     path = output_dir / "chapters.txt"
     path.write_text("".join(lines))
