@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Env
+.env
+
+# Cache / outputs
+cache/
+outputs/
+*.m4b
+*.mp3
+*.zip
+
+# Config with secrets
+config.local.yaml
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
