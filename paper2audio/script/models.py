@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, Field
 
@@ -27,14 +27,30 @@ class EquationSegment(BaseModel):
     text: str
 
 
-Segment = Annotated[
-    ReadSegment | ExplainSegment | FigureCueSegment | EquationSegment,
-    Field(discriminator="type"),
+class PodcastIntroSegment(BaseModel):
+    type: Literal["podcast_intro"] = "podcast_intro"
+    text: str
+
+
+class PodcastOutroSegment(BaseModel):
+    type: Literal["podcast_outro"] = "podcast_outro"
+    text: str
+
+
+AnySegment = Union[
+    ReadSegment,
+    ExplainSegment,
+    FigureCueSegment,
+    EquationSegment,
+    PodcastIntroSegment,
+    PodcastOutroSegment,
 ]
+
+Segment = Annotated[AnySegment, Field(discriminator="type")]
 
 
 class TimedSegment(BaseModel):
-    segment: ReadSegment | ExplainSegment | FigureCueSegment | EquationSegment
+    segment: AnySegment
     audio_path: str = ""
     start_seconds: float = 0.0
     end_seconds: float = 0.0

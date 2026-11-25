@@ -8,6 +8,8 @@ from ..script.models import (
     EquationSegment,
     ExplainSegment,
     FigureCueSegment,
+    PodcastIntroSegment,
+    PodcastOutroSegment,
     ReadSegment,
     Segment,
     TimedSegment,

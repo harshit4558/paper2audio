@@ -9,6 +9,8 @@ from ..script.models import (
     EquationSegment,
     ExplainSegment,
     FigureCueSegment,
+    PodcastIntroSegment,
+    PodcastOutroSegment,
     ReadSegment,
     TimedSegment,
 )
@@ -71,6 +73,12 @@ def build_companion_html(
         elif isinstance(seg, EquationSegment):
             rows.append(f'<div class="seg equation">{t_tag}<p>∑ {seg.text}</p></div>')
 
+        elif isinstance(seg, PodcastIntroSegment):
+            rows.append(f'<div class="seg intro">{t_tag}<p>🎙️ {seg.text}</p></div>')
+
+        elif isinstance(seg, PodcastOutroSegment):
+            rows.append(f'<div class="seg outro">{t_tag}<p>🎙️ {seg.text}</p></div>')
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -86,6 +94,7 @@ def build_companion_html(
   .explain {{ background: #fffbea; border-color: #f0c040; }}
   .figure {{ background: #f0f7ff; border-color: #4a90d9; }}
   .equation {{ background: #f5f0ff; border-color: #9b59b6; }}
+  .intro, .outro {{ background: #f0fff4; border-color: #2ecc71; font-style: italic; }}
   .ts {{ font-size: 0.75rem; color: #999; font-variant-numeric: tabular-nums; display: block; margin-bottom: 4px; }}
   p {{ margin: 0; }}
 </style>
